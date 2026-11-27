@@ -7,7 +7,8 @@
     "install:all": "npm install && npm --prefix vulnerable install && npm --prefix secure install",
     "start:vulnerable": "node vulnerable/server.js",
     "start:secure": "node secure/server.js",
-    "seed": "node seed.js"
+    "seed": "node seed.js",
+    "verify": "node verify.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

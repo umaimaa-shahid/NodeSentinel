@@ -141,6 +141,19 @@ Both applications expose identical routes:
 | **3. Headers, CORS & Cookies** | All routes (`GET /`, `POST /api/login`) | Omits Helmet (missing CSP, HSTS, `X-Frame-Options`); returns wildcard `Access-Control-Allow-Origin: *` with `Access-Control-Allow-Credentials: true`; sets `session_id` cookie without `HttpOnly`, `Secure`, or `SameSite`. | Uses `helmet` (CSP with `frame-ancestors 'none'`, HSTS, `X-Frame-Options: DENY`), enforces an explicit CORS origin allowlist, and sets cookies with `HttpOnly`, `Secure`, and `SameSite=Strict`. |
 | **4. Brute-Force Exposure** | `POST /api/login` (`/login`) | No rate limiting and no account lockout on repeated failed login attempts. | Enforces `express-rate-limit` (5 attempts per 15 min window with HTTP `429`, `Retry-After`, and `X-RateLimit-*` headers) plus per-account lockout (HTTP `423 Locked`) after 5 failed password attempts. |
 
+## Verified Behavior
+
+To run the automated end-to-end verification suite against both live servers (normal login, NoSQL injection `$ne`/`$gt`/`$where`, JWT weak secret & `alg:none`, brute-force rate limiting/lockout, and `Set-Cookie` security flags):
+
+```bash
+# Ensure MongoDB is running, databases are seeded, and both servers (:3001 and :3002) are started
+npm run seed
+npm run verify
+
+# Reset any account lockout state created during brute-force testing
+npm run seed
+```
+
 ## Scanning with NodeSentinel
 
 Once either demo app is running, run the NodeSentinel scanner against `http://127.0.0.1:3001` (vulnerable) and `http://127.0.0.1:3002` (secure) to compare detection results and verify zero false positives on the hardened variant.
