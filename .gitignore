@@ -1,0 +1,5 @@
+<CodeBlock language="gitignore" editable>
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
