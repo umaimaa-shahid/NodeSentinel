@@ -1,3 +1,1 @@
-<CodeBlock language="text" editable>
 requests>=2.31.0,<3.0
-</CodeBlock>
