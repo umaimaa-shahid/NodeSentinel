@@ -16,7 +16,6 @@ router.get('/products/search', async (req, res) => {
   try {
     const { error, value } = productSearchSchema.validate(req.query, {
       convert: false,
-      stripUnknown: true,
     });
 
     if (error) {

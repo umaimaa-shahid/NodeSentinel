@@ -17,7 +17,6 @@ async function handleUserSearch(req, res) {
   try {
     const { error, value } = userSearchSchema.validate(req.query, {
       convert: false,
-      stripUnknown: true,
     });
 
     if (error) {
