@@ -26,7 +26,11 @@ def parse_jwt(token: str) -> Optional[Tuple[Dict, Dict, str]]:
     if len(parts) != 3:
         return None
     try:
-        return json.loads(b64url_decode(parts[0])), json.loads(b64url_decode(parts[1])), parts[2]
+        header = json.loads(b64url_decode(parts[0]))
+        payload = json.loads(b64url_decode(parts[1]))
+        if not isinstance(header, dict) or not isinstance(payload, dict):
+            return None
+        return header, payload, parts[2]
     except (ValueError, UnicodeDecodeError):
         return None
 
@@ -108,7 +112,7 @@ class JWTCheckModule(ScannerModule):
             if hmac.compare_digest(mac, expected):
                 return [Finding(self.name, "JWT signed with a weak/guessable HMAC secret",
                                 "critical", "token signature",
-                                f"Secret matched wordlist entry '{cand}' ({alg}).",
+                                "Secret matched a wordlist entry (the signing secret is guessable).",
                                 "Use a random secret of 32+ bytes from a secrets manager "
                                 "and rotate it; existing tokens are forgeable.")]
         return []

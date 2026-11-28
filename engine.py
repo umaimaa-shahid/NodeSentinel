@@ -77,11 +77,8 @@ class ScannerModule(ABC):
 
 # name -> "module_path:ClassName" (lazy so one broken module can't break the CLI)
 MODULE_REGISTRY: Dict[str, str] = {
-    "nosql": "modules.nosql:NoSQLInjectionModule",
-    "jwt": "modules.jwt_check:JWTCheckModule",
-    # Umaima's modules (Workstream 3): class names below are the agreed contract.
-    "headers": "modules.headers:SecurityHeadersModule",
-    "bruteforce": "modules.brute_force:BruteForceModule",
+    "nosql": "nosql:NoSQLInjectionModule",
+    "jwt": "jwt_check:JWTCheckModule",
 }
 
 

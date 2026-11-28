@@ -36,7 +36,7 @@ def make_config(args: argparse.Namespace) -> ScanConfig:
     if args.config:
         cfg = ScanConfig.from_file(args.config)
         if args.url:
-            cfg.target = args.url.rstrip("/")
+            cfg.target = ScanConfig(target=args.url).target
     elif args.url:
         cfg = ScanConfig(target=args.url)
     else:
@@ -67,7 +67,7 @@ def main(argv=None) -> int:
     engine = ScanEngine(cfg)
     engine.run(args.modules.split(",") if args.modules else None)
     print(engine.to_json() if args.output == "json" else engine.to_text())
-    return 1 if any(f.severity != "info" for f in engine.findings) else 0
+    return 2 if engine.module_errors else (1 if any(f.severity != "info" for f in engine.findings) else 0)
 
 
 if __name__ == "__main__":
