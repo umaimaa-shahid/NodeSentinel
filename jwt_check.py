@@ -139,7 +139,7 @@ class JWTCheckModule(ScannerModule):
             forged = f"{b64url_encode(json.dumps({'alg': alg, 'typ': 'JWT'}).encode())}." \
                      f"{b64url_encode(json.dumps(payload).encode())}."
             resp = self.client.request("GET", path, headers=self._auth_headers(forged))
-            if resp is not None and resp.status_code < 400:
+            if resp is not None and 200 <= resp.status_code < 300:
                 return [Finding(self.name, "Server accepts unsigned JWT (alg: none)", "critical",
                                 path, f"alg='{alg}' token returned {resp.status_code} "
                                       f"while anonymous returned {anon.status_code}.",
