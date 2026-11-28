@@ -168,14 +168,33 @@ def check_cors(response, findings):
         )
 
 
+def _parse_cookie_attributes(cookie):
+    parts = [part.strip() for part in cookie.split(";")[1:] if part.strip()]
+    attributes = {}
+
+    for part in parts:
+        if "=" in part:
+            attr_name, attr_value = part.split("=", 1)
+            attributes[attr_name.strip().lower()] = attr_value.strip().lower()
+        else:
+            attributes[part.lower()] = True
+
+    return attributes
+
+
 def check_cookies(response, findings):
     cookies = get_cookie_headers(response)
 
     for index, cookie in enumerate(cookies, start=1):
-        cookie_lower = cookie.lower()
-        cookie_name = cookie.split("=", 1)[0].strip()
+        first_part = cookie.split(";", 1)[0]
+        cookie_name = (
+            first_part.split("=", 1)[0].strip()
+            if "=" in first_part
+            else "unknown"
+        )
+        attributes = _parse_cookie_attributes(cookie)
 
-        if "httponly" not in cookie_lower:
+        if "httponly" not in attributes:
             findings.append(
                 _finding(
                     f"COOKIE-{index:03d}-HTTPONLY",
@@ -190,7 +209,7 @@ def check_cookies(response, findings):
                 )
             )
 
-        if "secure" not in cookie_lower:
+        if "secure" not in attributes:
             findings.append(
                 _finding(
                     f"COOKIE-{index:03d}-SECURE",
@@ -204,7 +223,9 @@ def check_cookies(response, findings):
                 )
             )
 
-        if "samesite" not in cookie_lower:
+        samesite_value = attributes.get("samesite")
+
+        if samesite_value not in {"strict", "lax", "none"}:
             findings.append(
                 _finding(
                     f"COOKIE-{index:03d}-SAMESITE",
@@ -218,7 +239,7 @@ def check_cookies(response, findings):
                 )
             )
 
-        elif "samesite=none" in cookie_lower and "secure" not in cookie_lower:
+        elif samesite_value == "none" and "secure" not in attributes:
             findings.append(
                 _finding(
                     f"COOKIE-{index:03d}-SAMESITE-SECURE",
