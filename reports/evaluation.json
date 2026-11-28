@@ -1,0 +1,154 @@
+
+{
+  "project": "NodeSentinel",
+  "evaluation_type": "Security module evaluation",
+  "evaluation_status": "Pending integration testing",
+  "modules_evaluated": [
+    "Security Headers",
+    "CORS",
+    "Cookie Security",
+    "Brute Force Exposure"
+  ],
+  "test_environment": {
+    "vulnerable_application": "Afaf's vulnerable Express application",
+    "hardened_application": "Afaf's hardened Express application",
+    "scanner": "NodeSentinel Python CLI",
+    "testing_method": "Automated scanning with controlled test requests"
+  },
+  
+  "test_cases": [
+    {
+      "test_id": "EVAL-001",
+      "module": "Security Headers",
+      "vulnerability_tested": "Missing HTTP security headers",
+      "application_variant": "Vulnerable",
+      "expected_result": "Scanner identifies missing security headers such as Content-Security-Policy and X-Frame-Options.",
+      "actual_result": null,
+      "detection_success": null,
+      "false_positives": null,
+      "execution_status": "NOT_RUN",
+      "limitations": [
+        "HSTS should only be evaluated on HTTPS responses.",
+        "X-Frame-Options may be replaced by an appropriate CSP frame-ancestors directive."
+      ]
+    },
+    {
+      "test_id": "EVAL-002",
+      "module": "Security Headers",
+      "vulnerability_tested": "Missing or incorrectly configured security headers",
+      "application_variant": "Hardened",
+      "expected_result": "Scanner does not report missing headers that are correctly configured.",
+      "actual_result": null,
+      "detection_success": null,
+      "false_positives": null,
+      "execution_status": "NOT_RUN",
+      "limitations": [
+        "Header presence alone does not prove that the security policy is sufficiently restrictive."
+      ]
+    },
+    {
+      "test_id": "EVAL-003",
+      "module": "CORS",
+      "vulnerability_tested": "Wildcard CORS origin combined with credentials",
+      "application_variant": "Vulnerable",
+      "expected_result": "Scanner identifies an unsafe wildcard origin and credential configuration.",
+      "actual_result": null,
+      "detection_success": null,
+      "false_positives": null,
+      "execution_status": "NOT_RUN",
+      "limitations": [
+        "CORS behavior depends on the actual response headers and browser enforcement.",
+        "A wildcard origin with credentials may be rejected by browsers, so the finding should be interpreted as a configuration issue rather than proof of exploitable access."
+      ]
+    },
+    {
+      "test_id": "EVAL-004",
+      "module": "CORS",
+      "vulnerability_tested": "Overly permissive or unrestricted CORS configuration",
+      "application_variant": "Hardened",
+      "expected_result": "Scanner does not report the restricted and correctly configured CORS policy as an unsafe wildcard configuration.",
+      "actual_result": null,
+      "detection_success": null,
+      "false_positives": null,
+      "execution_status": "NOT_RUN",
+      "limitations": [
+        "The scanner's tested Origin may not cover every possible origin-handling behavior."
+      ]
+    },
+    {
+      "test_id": "EVAL-005",
+      "module": "Cookie Security",
+      "vulnerability_tested": "Missing HttpOnly, Secure, or SameSite cookie attributes",
+      "application_variant": "Vulnerable",
+      "expected_result": "Scanner identifies missing cookie security attributes in Set-Cookie responses.",
+      "actual_result": null,
+      "detection_success": null,
+      "false_positives": null,
+      "execution_status": "NOT_RUN",
+      "limitations": [
+        "Cookie checks require an endpoint that actually returns Set-Cookie headers.",
+        "Secure cookie behavior should be evaluated over HTTPS.",
+        "Cookie requirements can differ depending on the application's authentication design."
+      ]
+    },
+    {
+      "test_id": "EVAL-006",
+      "module": "Cookie Security",
+      "vulnerability_tested": "Missing cookie security attributes",
+      "application_variant": "Hardened",
+      "expected_result": "Scanner does not report missing attributes when the relevant cookies have correctly configured flags.",
+      "actual_result": null,
+      "detection_success": null,
+      "false_positives": null,
+      "execution_status": "NOT_RUN",
+      "limitations": [
+        "Only cookies returned by the endpoints visited during scanning are evaluated."
+      ]
+    },
+    {
+      "test_id": "EVAL-007",
+      "module": "Brute Force Exposure",
+      "vulnerability_tested": "Absence of observable login rate limiting",
+      "application_variant": "Vulnerable",
+      "expected_result": "Scanner reports that no rate-limiting behavior was observed after a bounded number of invalid login attempts.",
+      "actual_result": null,
+      "detection_success": null,
+      "false_positives": null,
+      "execution_status": "NOT_RUN",
+      "limitations": [
+        "A small number of requests cannot prove that rate limiting is completely absent.",
+        "Rate limiting may be implemented at a proxy, gateway, or infrastructure layer.",
+        "Only the configured login endpoint is tested."
+      ]
+    },
+    {
+      "test_id": "EVAL-008",
+      "module": "Brute Force Exposure",
+      "vulnerability_tested": "Login rate-limiting behavior",
+      "application_variant": "Hardened",
+      "expected_result": "Scanner observes rate-limiting evidence such as HTTP 429, an appropriate Retry-After header, or a relevant rate-limit signal.",
+      "actual_result": null,
+      "detection_success": null,
+      "false_positives": null,
+      "execution_status": "NOT_RUN",
+      "limitations": [
+        "A rate-limit response is evidence of rate limiting but does not establish that the implementation is effective against every brute-force strategy.",
+        "HTTP 423 alone may indicate a locked account rather than rate limiting."
+      ]
+    }
+  ],
+  "overall_false_positives": null,
+  "overall_limitations": [
+    "Evaluation is limited to the endpoints and responses accessible to the scanner.",
+    "Detection results depend on the accuracy of the demo application's vulnerable and hardened configurations.",
+    "Automated checks cannot establish the absence of every possible security vulnerability.",
+    "Findings require manual interpretation and validation."
+  ],
+  "evaluation_summary": {
+    "total_test_cases": 8,
+    "successful_detections": null,
+    "failed_detections": null,
+    "false_positives_count": null,
+    "pending_test_cases": 8
+  }
+}
