@@ -1,65 +1,140 @@
-# NodeSentinel Demo Applications
+# NodeSentinel
 
-> **WARNING — LOCAL LAB USE ONLY**
-> The `vulnerable/` application contains **deliberate security flaws** created solely for local educational testing and evaluating the NodeSentinel scanner's detection accuracy (true positives vs. false positives).
-> **Never expose the vulnerable application to a public network, deploy it to production, or use it with real credentials or personal data.** Both servers bind to `127.0.0.1` by default.
+NodeSentinel is a command-line security scanner for Node.js and Express APIs. It helps identify common web application security weaknesses and generates severity-ranked findings in text or JSON format.
 
-## Overview
+The project also provides two functionally identical Express + MongoDB demo applications: one intentionally vulnerable and one hardened. These applications allow NodeSentinel to be evaluated against known security weaknesses and their corresponding protections.
 
-This directory provides two functionally identical Express + MongoDB REST APIs:
+> **Safety:** Only scan systems you own or have explicit permission to test. The vulnerable demo application is strictly for local educational testing. Never expose it to a public network or use real credentials or personal data.
 
-| Variant | Directory | Default URL | Default MongoDB Database | Purpose |
-| --- | --- | --- | --- | --- |
-| Vulnerable | `vulnerable/` | `http://127.0.0.1:3001` | `demo_vulnerable` | Seeded with the four target vulnerability classes |
-| Secure (Hardened) | `secure/` | `http://127.0.0.1:3002` | `demo_secure` | Same API with security controls applied |
+## Features
 
-## Directory Structure
+### Security Detection
+
+- **NoSQL injection:** Tests configured endpoints with MongoDB-style `$ne`, `$gt`, and `$regex` operators.
+- **JWT security:** Checks token expiration, weak HMAC secrets, and whether protected endpoints accept unsigned `alg: none` tokens.
+- **Security headers, CORS and cookies:** Includes checks for missing security headers, unsafe CORS configurations, and insecure cookie attributes.
+- **Brute-force exposure:** Performs a bounded number of login attempts and checks for observable rate-limiting protections.
+
+### Reporting
+
+- Human-readable text output.
+- Structured JSON reports.
+- Severity-ranked findings.
+
+### Demo Applications
+
+- Vulnerable Express + MongoDB application.
+- Hardened Express + MongoDB application.
+- Matching API endpoints for comparison.
+- Seeded test accounts and sample data.
+- Automated end-to-end verification scripts.
+
+## Project Structure
 
 ```text
-demo-app/
-├── package.json            # Convenience scripts: install:all, seed, start:vulnerable, start:secure
-├── .env.example            # Root environment configuration template
-├── docker-compose.yml      # Local MongoDB container bound to 127.0.0.1:27017
-├── seed.js                 # Seeds both demo_vulnerable and demo_secure databases
-├── vulnerable/
+NodeSentinel/
+├── nodesentinel/
+│   ├── modules/
+│   │   ├── headers.py
+│   │   └── brute_force.py
+│   └── reporter/
+│       ├── html_report.py
+│       └── json_report.py
+├── tests/
+│   ├── test_modules.py
+│   └── test_reporters.py
+├── reports/
+│   ├── evaluation-notes.md
+│   └── evaluation.json
+├── demo-app/
+│   ├── vulnerable/
+│   ├── secure/
 │   ├── package.json
-│   ├── .env.example
-│   ├── db.js
-│   ├── server.js
-│   ├── middleware/auth.js
-│   └── routes/{auth,users,products}.js
-├── secure/
-│   ├── package.json
-│   ├── .env.example
-│   ├── db.js
-│   ├── server.js
-│   ├── middleware/{auth,rateLimit}.js
-│   └── routes/{auth,users,products}.js
+│   ├── docker-compose.yml
+│   ├── seed.js
+│   └── README.md
+├── requirements.txt
 └── README.md
 ```
 
-## Prerequisites
+*The scanner's CLI entry point and any additional engine files should also be included in this structure when confirmed in the repository.*
 
-- **Node.js** 18+ and **npm**
-- **MongoDB** 6+ running locally on `127.0.0.1:27017`, **or** Docker Desktop / Docker Engine
+## Requirements
 
-## 1. Start MongoDB
+### Scanner
 
-### Option A — Docker (recommended)
+- Python 3.9 or newer
+- pip
 
-From inside `demo-app/`:
+### Demo Applications
+
+- Node.js 18 or newer
+- npm
+- MongoDB 6 or newer, or Docker Desktop / Docker Engine
+
+## Scanner Installation
+
+Clone the repository and enter its directory:
+
+```bash
+git clone https://github.com/umaimaa-shahid/NodeSentinel.git
+cd NodeSentinel
+```
+
+Create and activate a virtual environment.
+
+**Windows PowerShell:**
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+**Linux/macOS:**
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+## Demo Applications
+
+NodeSentinel includes two Express + MongoDB REST API variants.
+
+| Variant | Directory | Default URL | Database |
+|---|---|---|---|
+| Vulnerable | `demo-app/vulnerable/` | `http://127.0.0.1:3001` | `demo_vulnerable` |
+| Secure | `demo-app/secure/` | `http://127.0.0.1:3002` | `demo_secure` |
+
+Both applications expose matching API routes. The vulnerable application contains deliberate security flaws, while the secure application implements corresponding security controls.
+
+### 1. Start MongoDB
+
+Navigate to the demo application directory:
+
+```bash
+cd demo-app
+```
+
+Using Docker:
 
 ```bash
 docker compose up -d
 ```
 
-This starts MongoDB 7 bound exclusively to `127.0.0.1:27017`.
+Alternatively, start a local MongoDB service on:
 
-### Option B — Local MongoDB installation
+```text
+mongodb://127.0.0.1:27017
+```
 
-Ensure the local `mongod` service is running on `mongodb://127.0.0.1:27017`.
-
-## 2. Install Dependencies
+### 2. Install Demo Dependencies
 
 From inside `demo-app/`:
 
@@ -67,11 +142,9 @@ From inside `demo-app/`:
 npm run install:all
 ```
 
-(Or install individually inside `demo-app/`, `demo-app/vulnerable/`, and `demo-app/secure/` with `npm install`.)
+### 3. Configure Environment Variables
 
-## 3. Configure Environment Variables (Optional)
-
-Default settings work out of the box for local MongoDB. To customize ports, MongoDB URIs, JWT secrets, or allowed CORS origins, copy the template files:
+The default settings work with local MongoDB. To customize the configuration, copy the example files:
 
 ```bash
 cp .env.example .env
@@ -79,9 +152,9 @@ cp vulnerable/.env.example vulnerable/.env
 cp secure/.env.example secure/.env
 ```
 
-For the `secure/` app, set a strong random `JWT_SECRET` (at least 32 characters) in `secure/.env`.
+For the secure application, configure a strong random `JWT_SECRET` of at least 32 characters.
 
-## 4. Seed the Databases
+### 4. Seed the Databases
 
 From inside `demo-app/`:
 
@@ -89,71 +162,216 @@ From inside `demo-app/`:
 npm run seed
 ```
 
-This resets and populates both `demo_vulnerable` and `demo_secure` with 3 users and 10 sample products. Passwords are stored in plaintext in `demo_vulnerable` and hashed with `bcryptjs` in `demo_secure`.
+This populates both databases with three users and ten sample products.
 
-### Test Credentials
+### 5. Start Both Applications
 
-| Username | Password | Role | Email |
-| --- | --- | --- | --- |
-| `admin` | `Admin@123` | `admin` | `admin@nodesentinel.local` |
-| `alice` | `Alice@123` | `user` | `alice@nodesentinel.local` |
-| `bob` | `Bob@123` | `user` | `bob@nodesentinel.local` |
+Open two terminals inside `demo-app/`.
 
-## 5. Run the Applications
-
-Open two terminals inside `demo-app/`:
+**Terminal 1 — Vulnerable application:**
 
 ```bash
-# Terminal 1 — Vulnerable variant (http://127.0.0.1:3001)
 npm run start:vulnerable
+```
 
-# Terminal 2 — Hardened variant (http://127.0.0.1:3002)
+**Terminal 2 — Secure application:**
+
+```bash
 npm run start:secure
 ```
 
-Verify both servers are running:
+The applications should be available at:
+
+- Vulnerable: `http://127.0.0.1:3001`
+- Secure: `http://127.0.0.1:3002`
+
+Verify that both are running:
 
 ```bash
 curl http://127.0.0.1:3001/api/health
 curl http://127.0.0.1:3002/api/health
 ```
 
+## Demo Test Credentials
+
+| Username | Password | Role |
+|---|---|---|
+| `admin` | `Admin@123` | admin |
+| `alice` | `Alice@123` | user |
+| `bob` | `Bob@123` | user |
+
+These credentials are for the local demo environment only.
+
 ## API Endpoints
 
-Both applications expose identical routes:
+Both demo applications expose the following routes:
 
-| Method | Path | Auth Required | Description |
-| --- | --- | --- | --- |
-| `GET` | `/` | No | App status response (sets `session_id` cookie) |
-| `GET` | `/api/health` | No | Health check returning variant and connected DB name |
-| `POST` | `/api/login` | No | Authenticates `{ username, password }`, sets cookie, returns JWT `token` |
-| `POST` | `/login` | No | Alias for `/api/login` for scanner default path compatibility |
-| `GET` | `/api/profile` | Bearer JWT | Returns authenticated user profile |
-| `GET` | `/api/users/search?name=...` | No | Searches users by username (also aliased at `/api/users`) |
-| `GET` | `/api/products/search?q=...` | No | Searches products by name or category |
+| Method | Endpoint | Authentication | Description |
+|---|---|---|---|
+| GET | `/` | No | App status and session cookie |
+| GET | `/api/health` | No | Health check |
+| POST | `/api/login` | No | Login and JWT generation |
+| POST | `/login` | No | Login alias |
+| GET | `/api/profile` | Bearer JWT | Authenticated profile |
+| GET | `/api/users/search?name=...` | No | User search |
+| GET | `/api/products/search?q=...` | No | Product search |
 
-## Vulnerability Classes vs. Hardened Controls
+## Vulnerable vs. Secure Applications
 
-| Class | Affected Endpoint(s) | Vulnerable App (`:3001`) | Secure App (`:3002`) |
-| --- | --- | --- | --- |
-| **1. NoSQL Injection** | `POST /api/login`, `GET /api/users/search`, `GET /api/products/search` | Passes raw `req.body` and `req.query` directly into MongoDB queries; constructs a `$where` filter from `q` in product search. | Applies `express-mongo-sanitize`, validates all inputs strictly as strings with Joi (`convert: false`), hashes passwords with `bcryptjs` (`bcrypt.compare`), and replaces `$where` with escaped regex filters. |
-| **2. JWT Weaknesses** | `POST /api/login`, `GET /api/profile` | Signs tokens using weak secret `secret123` with no `exp` claim; auth middleware accepts `alg: "none"` without signature verification. | Requires a strong 32+ char secret from env, pins verification to `{ algorithms: ['HS256'] }`, sets `expiresIn: '15m'`, and explicitly rejects `alg: "none"`. |
-| **3. Headers, CORS & Cookies** | All routes (`GET /`, `POST /api/login`) | Omits Helmet (missing CSP, HSTS, `X-Frame-Options`); returns wildcard `Access-Control-Allow-Origin: *` with `Access-Control-Allow-Credentials: true`; sets `session_id` cookie without `HttpOnly`, `Secure`, or `SameSite`. | Uses `helmet` (CSP with `frame-ancestors 'none'`, HSTS, `X-Frame-Options: DENY`), enforces an explicit CORS origin allowlist, and sets cookies with `HttpOnly`, `Secure`, and `SameSite=Strict`. |
-| **4. Brute-Force Exposure** | `POST /api/login` (`/login`) | No rate limiting and no account lockout on repeated failed login attempts. | Enforces `express-rate-limit` (5 attempts per 15 min window with HTTP `429`, `Retry-After`, and `X-RateLimit-*` headers) plus per-account lockout (HTTP `423 Locked`) after 5 failed password attempts. |
+The demo applications cover four security vulnerability classes.
 
-## Verified Behavior
+| Vulnerability Class | Vulnerable Application | Secure Application |
+|---|---|---|
+| NoSQL Injection | Raw request data is used in MongoDB queries, including a `$where` filter. | Input sanitization, strict Joi validation, password hashing, and escaped regex filters. |
+| JWT Weaknesses | Weak signing secret, no expiration claim, and acceptance of unsigned tokens. | Strong environment-based secret, HS256 verification, token expiration, and rejection of `alg: none`. |
+| Headers, CORS and Cookies | Missing security headers, wildcard CORS with credentials, and insecure cookie attributes. | Helmet security headers, explicit CORS allowlist, and HttpOnly, Secure, SameSite cookie attributes. |
+| Brute-Force Exposure | No login rate limiting or account lockout. | Rate limiting, HTTP 429 responses, and account lockout after repeated failed attempts. |
 
-To run the automated end-to-end verification suite against both live servers (normal login, NoSQL injection `$ne`/`$gt`/`$where`, JWT weak secret & `alg:none`, brute-force rate limiting/lockout, and `Set-Cookie` security flags):
+## Running NodeSentinel
+
+Once a demo application is running, use its URL as the scanner target.
+
+### NoSQL Injection Check
 
 ```bash
-# Ensure MongoDB is running, databases are seeded, and both servers (:3001 and :3002) are started
-npm run seed
-npm run verify
+python main.py http://127.0.0.1:3001 \
+  --endpoint "POST:/api/login" \
+  --modules nosql
+```
 
-# Reset any account lockout state created during brute-force testing
+### JWT Security Check
+
+```bash
+python main.py http://127.0.0.1:3001 \
+  --login-path "/api/login" \
+  --login-creds '{"username":"admin","password":"Admin@123"}' \
+  --token-field "token" \
+  --protected-path "/api/profile" \
+  --modules jwt
+```
+
+Repeat the scans against `http://127.0.0.1:3002` to compare the hardened application.
+
+### JSON Output
+
+```bash
+python main.py http://127.0.0.1:3001 \
+  --modules jwt \
+  --output json
+```
+
+### Configuration File
+
+Scanner targets and endpoint details can be stored in a JSON configuration file:
+
+```json
+{
+  "target": "http://127.0.0.1:3001",
+  "timeout": 10,
+  "verify_tls": true,
+  "headers": {
+    "X-Scanner": "NodeSentinel"
+  },
+  "endpoints": [
+    {
+      "path": "/api/login",
+      "method": "POST",
+      "params": {
+        "username": "nodesentinel",
+        "password": "invalid-pass-123"
+      },
+      "location": "json"
+    }
+  ],
+  "token": null,
+  "login_path": "/api/login",
+  "login_creds": {
+    "username": "admin",
+    "password": "Admin@123"
+  },
+  "token_field": "token",
+  "protected_path": "/api/profile",
+  "wordlist_path": null
+}
+```
+
+Run:
+
+```bash
+python main.py --config scan.json --modules nosql,jwt
+```
+
+Command-line flags override configuration-file values.
+
+## CLI Options
+
+| Option | Description |
+|---|---|
+| `url` | Target base URL |
+| `-c, --config` | Load settings from a JSON file |
+| `-e, --endpoint` | Add a `METHOD:/path` endpoint |
+| `-m, --modules` | Select scanner modules |
+| `--token` | JWT to analyze |
+| `--login-path` | Endpoint used to obtain a JWT |
+| `--login-creds` | JSON login credentials |
+| `--token-field` | JSON key containing the token |
+| `--protected-path` | Protected endpoint for the unsigned-token check |
+| `--wordlist` | Additional weak-secret candidates |
+| `--timeout` | HTTP request timeout |
+| `--insecure` | Disable TLS certificate verification |
+| `-o, --output` | Output format: `text` or `json` |
+
+Run the following for the complete built-in help:
+
+```bash
+python main.py --help
+```
+
+## Testing and Evaluation
+
+Run the Python unit tests from the repository root:
+
+```bash
+python -m unittest discover -s tests -t . -v
+```
+
+Check Python syntax:
+
+```bash
+python -m compileall nodesentinel tests
+```
+
+For the demo applications, ensure MongoDB is running, both databases are seeded, and both servers are started.
+
+From inside `demo-app/`, run:
+
+```bash
+npm run verify
+```
+
+Reset the demo databases after verification:
+
+```bash
 npm run seed
 ```
 
-## Scanning with NodeSentinel
+The evaluation compares scanner results against the known vulnerable and hardened application configurations. It considers detection success, false positives, false negatives, and execution status.
 
-Once either demo app is running, run the NodeSentinel scanner against `http://127.0.0.1:3001` (vulnerable) and `http://127.0.0.1:3002` (secure) to compare detection results and verify zero false positives on the hardened variant.
+See `reports/evaluation-notes.md` and `reports/evaluation.json` for the evaluation methodology and recorded results.
+
+## Exit Codes
+
+| Code | Meaning |
+|---|---|
+| `0` | No non-informational findings |
+| `1` | One or more low, medium, high, or critical findings |
+| `2` | Invalid configuration or command-line input |
+
+## Safety Notice
+
+The vulnerable demo application intentionally contains exploitable security weaknesses.
+
+- Run both demo applications locally.
+- Do not expose the vulnerable application to public networks.
+- Do not use real credentials or personal data.
+- Only scan applications you own or have explicit permission to test.
